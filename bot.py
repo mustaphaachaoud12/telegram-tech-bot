@@ -5,41 +5,50 @@ import asyncio
 import xml.etree.ElementTree as ET
 import os
 
-# 🔐 ناخدو التوكن من Render (ماشي من الكود)
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = 7267064983
 
-def get_tech_news():
-    try:
-        url = "https://news.google.com/rss/search?q=technology"
-        response = requests.get(url)
+# 🧠 ترجمة بسيطة (بدون API)
+def translate_to_ar(text):
+    return text  # نقدر نطورها لاحقاً بـ AI
 
-        root = ET.fromstring(response.content)
-        items = root.findall(".//item")[:5]
+# 🧠 تلخيص بسيط
+def summarize(text):
+    return text[:100] + "..." if len(text) > 100 else text
 
-        news_text = f"📰 Tech News - {datetime.now().strftime('%Y-%m-%d')}\n\n"
+def get_ai_news():
+    url = "https://news.google.com/rss/search?q=AI+OpenAI+Claude+technology"
+    response = requests.get(url)
 
-        for item in items:
-            title = item.find("title").text
-            link = item.find("link").text
-            news_text += f"🔹 {title}\n{link}\n\n"
+    root = ET.fromstring(response.content)
+    items = root.findall(".//item")[:5]
 
-        return news_text
+    news_text = f"🤖 أخبار الذكاء الاصطناعي - {datetime.now().strftime('%Y-%m-%d')}\n\n"
 
-    except:
-        return "❌ وقع مشكل فـ جلب الأخبار"
+    for item in items:
+        title = item.find("title").text
+        link = item.find("link").text
+        pub_date = item.find("pubDate").text
+
+        summary = summarize(title)
+        translated = translate_to_ar(summary)
+
+        news_text += f"🔹 {translated}\n"
+        news_text += f"🕒 {pub_date}\n"
+        news_text += f"🔗 {link}\n\n"
+
+    return news_text
 
 async def main():
     bot = Bot(token=TOKEN)
 
     while True:
         try:
-            await bot.send_message(chat_id=CHAT_ID, text=get_tech_news())
-            print("✅ News sent")
+            await bot.send_message(chat_id=CHAT_ID, text=get_ai_news())
+            print("✅ AI News sent")
         except Exception as e:
             print("❌ Error:", e)
 
-        await asyncio.sleep(86400)  # 24h
+        await asyncio.sleep(86400)
 
-# تشغيل البوت
 asyncio.run(main())
